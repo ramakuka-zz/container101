@@ -1,0 +1,52 @@
+version: '1.0'
+steps:
+  set-version:
+    description: set project version 
+    image: runeffective/base:1.2
+    working-directory: ${{initial-clone}}
+    commands:
+    - echo ${{CF_SHORT_REVISION}} > Version  
+  run bundler:
+    description: run bundle install
+    image: runeffective/base:1.2
+    working-directory: ${{initial-clone}}
+    commands:
+    - bundler install
+  
+  build-docker-image:
+    type: build
+    image-name: ramakuka/container101
+    working-directory: ${{initial-clone}}
+    tag: ${{CF_SHORT_REVISION}}
+
+  push-docker-image:
+    type: push
+    candidate: ${{build-docker-image}}
+    tag: ${{CF_SHORT_REVISION}}
+    when:
+      branch:
+        only:
+          - master
+  
+  push-docker-latest-image:
+    type: push
+    candidate: ${{build-docker-image}}
+    tag: latest
+    when:
+      branch:
+        only:
+          - master
+  
+ # deploy-ci:
+ #   description: deploy to k8s
+ #   image: runeffective/kubit:latest
+ #   when:
+ #     branch:
+ #       only:
+ #         - master
+ #   commands: 
+ #     - ./bin/kubit --api_server https://kube.qa.runeffective.com --project hephaestus,artemis,aphrodite,athena:${{CF_SHORT_REVISION}}  --namespace qa-codefresh-athena --env qa --overridens
+ #   environment:
+ #     - GITHUB_TOKEN=${{GITHUB_TOKEN}}
+ #     - DOCKER_HUB_PASS=${{DOCKER_HUB_PASS}}
+ # 
