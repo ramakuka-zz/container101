@@ -1,0 +1,41 @@
+default: &default
+  adapter: postgresql
+  encoding: utf8
+  host: <%= ENV.fetch("DB_HOST") %>
+  username: <%= ENV.fetch("DB_USER") %>
+  password: <%= ENV.fetch("DB_PASS") %>
+
+  # For details on connection pooling, see rails configuration
+  # guide: http://goo.gl/D25TCB
+  pool: <%= ENV.fetch("DB_POOL") %>
+
+development:
+  <<: *default
+  database: <%= ENV.fetch("DB_NAME") %>_development
+
+# Warning: The database defined as "test" will be erased and
+# re-generated from your development database when you run "rake".
+# Do not set this db to the same as development or production.
+test:
+  <<: *default
+  database: <%= ENV.fetch("DB_NAME") %>_test
+
+qa:
+  <<: *default
+  database: <%= ENV.fetch("DB_NAME") %>_qa
+
+demo:
+  <<: *default
+  database: <%= ENV.fetch("DB_NAME") %>_demo
+
+production:
+  <<: *default
+  database: <%= ENV.fetch("DB_NAME") %>_production
+
+staging:
+  <<: *default
+  database: <%= ENV.fetch("DB_NAME") %>_staging
+
+automation:
+  <<: *default
+  database: <%= ENV.fetch("DB_NAME") %>_automation
