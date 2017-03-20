@@ -1,0 +1,75 @@
+---
+   apiVersion: "extensions/v1beta1"
+   kind: "Deployment"
+   metadata:
+     name: "container101"
+   spec:
+     replicas: 2
+     template:
+       metadata:
+         name: "container101"
+         labels:
+           tier: "backend"
+           name: "container101"
+           app: "rails"
+       spec:
+         containers:
+           - name: "rails"
+             image: ramakuka/container101:$VERSION
+             ports:
+               - name: "rails-port"
+                 containerPort: 3000
+             env:
+               - name: EXTERNAL_URL
+                 valueFrom:
+                   configMapKeyRef:
+                     name: container101-ingress-endpoint
+                     key: external_url
+               - name: "RAILS_RESQUE_REDIS"
+                 valueFrom:
+                   configMapKeyRef:
+                     name: default-app
+                     key: redis.url
+               - name: "REDIS_URL"
+                 valueFrom:
+                   configMapKeyRef:
+                     name: default-app
+                     key: redis.url
+               - name: "RAILS_ENV"
+                 valueFrom:
+                   configMapKeyRef:
+                     name: default-app
+                     key: rails.env
+             livenessProbe:
+               httpGet:
+                 path: /check
+                 port: 3000
+                 scheme: HTTP
+               timeoutSeconds: 3
+               successThreshold: 1
+               failureThreshold: 3
+               initialDelaySeconds: 60
+             readinessProbe:
+               httpGet:
+                 path: /check
+                 port: 3000
+                 scheme: HTTP
+               initialDelaySeconds: 30
+               timeoutSeconds: 1
+             volumeMounts:
+               - name: "secrets"
+                 mountPath: "/tmp/secrets/"
+               - name: "default-app-vol"
+                 mountPath: "/tmp/config/"
+         imagePullSecrets:
+           - name: "docker-reg"
+         volumes:
+           - name: "secrets"
+             secret:
+               secretName: "container101"
+           - name: default-app-vol
+             configMap:
+               name: default-app
+               items:
+               - key: appconfig
+                 path: appconfig

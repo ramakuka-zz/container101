@@ -1,0 +1,46 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: containers101-db-migration
+  labels:
+    name: "container101-db-migration"
+spec:
+  containers:
+    - name: "rails"
+      command: ["bash", "-c", "bin/db-migration"]
+      image: ramakuka/container101:$VERSION
+      ports:
+      env:
+        - name: "RAILS_RESQUE_REDIS"
+          valueFrom:
+            configMapKeyRef:
+              name: default-app
+              key: redis.url
+        - name: "REDIS_URL"
+          valueFrom:
+            configMapKeyRef:
+              name: default-app
+              key: redis.url
+        - name: "RAILS_ENV"
+          valueFrom:
+            configMapKeyRef:
+              name: default-app
+              key: rails.env
+      volumeMounts:
+        - name: "secrets"
+          mountPath: "/tmp/secrets/"
+        - name: "default-app-vol"
+          mountPath: "/tmp/config/"
+  restartPolicy: Never
+  imagePullSecrets:
+    - name: "docker-reg"
+  volumes:
+    - name: default-app-vol
+      configMap:
+        name: default-app
+        items:
+          - key: appconfig
+            path: appconfig  
+    - name: "secrets"
+      secret:
+        secretName: "container101"
